@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "533411227021",
+    "firebase_url": "https://phoneauth-ce710.firebaseio.com",
+    "project_id": "phoneauth-ce710",
+    "storage_bucket": "phoneauth-ce710.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:533411227021:android:f659d42a7f928000",
+        "android_client_info": {
+          "package_name": "com.example.chippy.phoneauth"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "533411227021-n81j61d5liqpupmd5d23qr5qoqu1pcjf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.chippy.phoneauth",
+            "certificate_hash": "a1959421aad516bf981f50b7c65ab3b4fde009be"
+          }
+        },
+        {
+          "client_id": "533411227021-rds5vgqipgomnfm6mh19pbb2a5p0k8nr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIeL6Wkg0FJBOIdiIl2nuhbI2H7k4VjvA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "533411227021-rds5vgqipgomnfm6mh19pbb2a5p0k8nr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
