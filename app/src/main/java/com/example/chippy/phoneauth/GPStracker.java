@@ -1,5 +1,4 @@
-package com.example.chippy.phoneauth;
-
+package com.example.athira.vedio;
 
 import android.Manifest;
 import android.content.Context;
@@ -11,12 +10,16 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
 
+/**
+ * Created by ATHIRA on 2/19/2018.
+ */
+
 public class GPStracker implements LocationListener {
     Context context;
     public GPStracker(Context c){
         context = c;
 
-       //co
+
     }
     public Location getLocation()
     {
@@ -27,9 +30,9 @@ public class GPStracker implements LocationListener {
         LocationManager lm =( LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         boolean isGPSEnabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
         if( isGPSEnabled){
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,6000,10,this);
-            Location l= lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            return l;
+                   lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,6000,10,this);
+                   Location l= lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                   return l;
 
         }
         else
