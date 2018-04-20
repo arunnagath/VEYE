@@ -1,13 +1,17 @@
 package com.example.chippy.phoneauth;
 
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.support.v4.app.ActivityCompat;
+
+import com.android.volley.RequestQueue;
+
+import android.telephony.TelephonyManager;
 import android.view.View;
 
 import android.content.Intent;
@@ -21,6 +25,7 @@ import android.view.SurfaceHolder;
 import java.io.IOException;
 
 import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -47,67 +52,53 @@ import android.app.ProgressDialog;
 
 import android.net.Uri;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+
 import java.io.File;
 
 import java.util.Calendar;
 
 
-
 import com.google.firebase.auth.FirebaseAuth;
 
-public class main extends Activity{
+import org.json.JSONException;
+import org.json.JSONObject;
 
+public class main extends Activity {
 
 
     private Camera myCamera;
     private MyCameraSurfaceView myCameraSurfaceView;
     private MediaRecorder mediaRecorder;
-    public FirebaseAuth mAuth;
     Button myButton;
-    SurfaceHolder surfaceHolder;
     boolean recording;
-    String need ="start";
-    EditText editText;
-    ImageButton button;
-
-    //-------------------------------------
-
-//    private Button mUploadBtn;
-//    private final int VIDEO_REQUEST_CODE=100;
     Calendar calander;
     SimpleDateFormat simpledateformat;
-    //private final int VIDEO_REQUEST_CODE=100;
-    String Date;
-     public String phone="9888888888",mFileName;
-    String child;
-    double lat,lon;
-    Context mContext;
-    Intent data;
+    String Date,location=" ";
+    public String phone = "9888888888", mFileName;
+    double lat, lon;
     private StorageReference mStorage;
-
     DatabaseReference databaseRef;
     FirebaseDatabase fDatabase;
     GPStracker g;
     private ProgressDialog mProgress;
-
-    //--------------------------------------
-    /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         recording = false;
-
         setContentView(R.layout.activity_main2);
-
         mStorage = FirebaseStorage.getInstance().getReference();
         fDatabase = FirebaseDatabase.getInstance();
         myButton = (Button) findViewById(R.id.mybutton);
@@ -115,27 +106,23 @@ public class main extends Activity{
         g = new GPStracker(getApplicationContext());
         //Get Camera for preview
         myCamera = getCameraInstance();
-
         if(myCamera == null){
             Toast.makeText(main.this,
                     "Fail to get Camera",
                     Toast.LENGTH_LONG).show();
         }
-
         myCameraSurfaceView = new MyCameraSurfaceView(this, myCamera);
         FrameLayout myCameraPreview = (FrameLayout)findViewById(R.id.videoview);
         myCameraPreview.addView(myCameraSurfaceView);
-
         myCamera.setDisplayOrientation(90);
-     //   phone=mAuth.getCurrentUser().getPhoneNumber().toString();
+        phone=FirebaseAuth.getInstance().getCurrentUser().getPhoneNumber().toString();
+     //   Toast.makeText(main.this, phone, Toast.LENGTH_LONG).show();
         myButton = (Button)findViewById(R.id.mybutton);
-
         myButton.setOnClickListener(myButtonOnClickListener);
         final EditText editText = findViewById(R.id.editText);
         final ImageButton button = findViewById(R.id.button);
         editText.setVisibility(View.INVISIBLE);
         button.setVisibility(View.INVISIBLE);
-
         final SpeechRecognizer mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         final Intent mSpeechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -178,7 +165,6 @@ public class main extends Activity{
                 //getting all the matches
                 ArrayList<String> matches = bundle
                         .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-
                 //displaying the first match
                 if (matches != null)
                     editText.setText(matches.get(0));
@@ -188,9 +174,6 @@ public class main extends Activity{
                 {
                     //Toast.makeText(main.this, "hai", Toast.LENGTH_LONG).show();
                     editText.setVisibility(View.INVISIBLE);
-
-
-
                     //function
                     myCamera.setDisplayOrientation(90);
                     try{
@@ -198,11 +181,6 @@ public class main extends Activity{
                             // stop recording and release camera
                             mediaRecorder.stop();  // stop the recording
                             releaseMediaRecorder(); // release the MediaRecorder object
-
-
-
-
-
                             //Exit after saved
                             //finish();
                           calander = Calendar.getInstance();
@@ -210,24 +188,33 @@ public class main extends Activity{
                             Date = simpledateformat.format(calander.getTime());
                             // GPStracker g = new GPStracker(getApplicationContext());
                             Location l = g.getLocation();
-                            if(l!=null) {
+                            Geocoder gCoder = new Geocoder(main.this);
+                            if (l != null) {
                                 lat = l.getLatitude();
                                 lon = l.getLongitude();
-
+                                //   Toast.makeText(getApplicationContext(), "LAT:" + lat + "\n LONG:" + lon, Toast.LENGTH_LONG).show();
+                                ArrayList<Address> addresses = null;
+                                try {
+                                    addresses = (ArrayList<Address>) gCoder.getFromLocation(lat,lon, 1);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                if (addresses != null && addresses.size() > 0) {
+                                     // Toast.makeText(main.this, "district: " + addresses.get(0).getSubAdminArea(), Toast.LENGTH_LONG).show();
+                                    // Toast.makeText(MainActivity.this, "locality: " + addresses.get(0).getLocality(), Toast.LENGTH_LONG).show();
+                                    location=addresses.get(0).getSubAdminArea().toString();
+                                }
                             }
-                            Toast.makeText(getApplicationContext(),"LAT:"+lat+"\n LONG:"+lon,Toast.LENGTH_LONG).show();
-
+                         //   Toast.makeText(getApplicationContext(),"LAT:"+lat+"\n LONG:"+lon,Toast.LENGTH_LONG).show();
                             // release the MediaRecorder object
-                            String b = String.valueOf(Environment.getExternalStorageDirectory());
+                           String b = String.valueOf(Environment.getExternalStorageDirectory());
+                            //String b = Environment.getExternalStorageDirectory().toString();
                             final String path = b+"/"+mFileName;
                             Uri uri = Uri.fromFile(new File(path));
-
                             StorageReference filepath = mStorage.child(mFileName);
                             filepath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                                 @Override
                                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-
-
                                     mProgress.setMessage("Uploading video...");
                                     mProgress.show();
                                     Uri downloadUrl = taskSnapshot.getDownloadUrl();
@@ -235,42 +222,30 @@ public class main extends Activity{
                                     databaseRef.child("date").setValue(Date);
                                     databaseRef.child("latitude").setValue(lat);
                                     databaseRef.child("longitude").setValue(lon);
+                                    databaseRef.child("location").setValue(location);
                                     databaseRef.child("phone").setValue(phone);
                                     databaseRef.child("videourl").setValue(String.valueOf(downloadUrl));
-                                    mProgress.dismiss();}
+                                    mProgress.dismiss();
+                                }
                             })
                                     .addOnFailureListener(new OnFailureListener() {
                                         @Override
                                         public void onFailure( Exception exception) {
                                             // Handle unsuccessful uploads
-                                            Toast.makeText(main.this,mFileName, Toast.LENGTH_LONG).show();
+                                            Toast.makeText(main.this,"Error uploading", Toast.LENGTH_LONG).show();
                                         }
                                     });
-
-
-
-
-                            //   button.setVisibility(View.VISIBLE);
                             myButton.setText("Start");
-
-
                             recording = false;
-                            //editText.setVisibility(View.VISIBLE);
-
                         }else{
-
                             //Release Camera before MediaRecorder start
                             releaseCamera();
-
                             if(!prepareMediaRecorder()){
                                 Toast.makeText(main.this,
                                         "Fail in prepareMediaRecorder()!\n - Ended -",
                                         Toast.LENGTH_LONG).show();
-
                                 finish();
                             }
-                            //  button.setVisibility(View.VISIBLE);
-
                             mediaRecorder.start();
                             recording = true;
                             myButton.setText("Stop");
@@ -279,11 +254,7 @@ public class main extends Activity{
                     }catch (Exception ex){
                         ex.printStackTrace();
                     }}
-
-
-
             }
-
             @Override
             public void onPartialResults(Bundle bundle) {
 
@@ -305,7 +276,6 @@ public class main extends Activity{
                 editText.setHint("Listening...");
 
             }
-
             @Override
             public void onFinish() {
 
@@ -313,16 +283,10 @@ public class main extends Activity{
                 editText.setHint("You will see input here");
             }
         }.start();
-
-
-        //----------------------------------------------
     }
-
-
 
     Button.OnClickListener myButtonOnClickListener
             = new Button.OnClickListener(){
-
         @Override
         public void onClick(View v) {
             // TODO Auto-generated method stub
@@ -330,22 +294,29 @@ public class main extends Activity{
             try{
                 if(recording) {
                     // stop recording and release camera
-
                     //gps get location date and time
                     calander = Calendar.getInstance();
                     simpledateformat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
                     Date = simpledateformat.format(calander.getTime());
                     // GPStracker g = new GPStracker(getApplicationContext());
                     Location l = g.getLocation();
+                    Geocoder gCoder = new Geocoder(main.this);
                     if (l != null) {
                         lat = l.getLatitude();
                         lon = l.getLongitude();
+                     //   Toast.makeText(getApplicationContext(), "LAT:" + lat + "\n LONG:" + lon, Toast.LENGTH_LONG).show();
+                        ArrayList<Address> addresses = null;
+                        try {
+                            addresses = (ArrayList<Address>) gCoder.getFromLocation(lat,lon, 1);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        if (addresses != null && addresses.size() > 0) {
+                            // Toast.makeText(MainActivity.this, "country: " + addresses.get(0).getLocality(), Toast.LENGTH_LONG).show();
+                           // Toast.makeText(main.this, "district: " + addresses.get(0).getSubAdminArea(), Toast.LENGTH_LONG).show();
+                            location=addresses.get(0).getSubAdminArea().toString();
+                        }
                     }
-                    Toast.makeText(getApplicationContext(), "LAT:" + lat + "\n LONG:" + lon, Toast.LENGTH_LONG).show();
-
-
-
-
 
                     mediaRecorder.stop();  // stop the recording
                     releaseMediaRecorder(); // release the MediaRecorder object
@@ -353,14 +324,10 @@ public class main extends Activity{
                     final String path = b+"/"+mFileName;
                     Uri uri = Uri.fromFile(new File(path));
 
-                   // StorageReference filepath = mStorage.child(uri.getLastPathSegment());
-
-
                     StorageReference filepath = mStorage.child(mFileName);
                     filepath.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-
 
                             mProgress.setMessage("Uploading video...");
                             mProgress.show();
@@ -369,6 +336,7 @@ public class main extends Activity{
                             databaseRef.child("date").setValue(Date);
                             databaseRef.child("latitude").setValue(lat);
                             databaseRef.child("longitude").setValue(lon);
+                            databaseRef.child("location").setValue(location);
                             databaseRef.child("phone").setValue(phone);
                             databaseRef.child("videourl").setValue(String.valueOf(downloadUrl));
                             mProgress.dismiss();}
@@ -377,22 +345,18 @@ public class main extends Activity{
                                 @Override
                                 public void onFailure( Exception exception) {
                                     // Handle unsuccessful uploads
-                                    Toast.makeText(main.this,mFileName, Toast.LENGTH_LONG).show();
+                                    Toast.makeText(main.this,"Error Uploading", Toast.LENGTH_LONG).show();
+                                  //  Toast.makeText(main.this, phone, Toast.LENGTH_LONG).show();
                                 }
                             });
 
                     myButton.setText("Start");
                     Toast.makeText(main.this, "Recording saved", Toast.LENGTH_LONG).show();
-
-
-
                     recording = false;
                 }else{
 
                     //Release Camera before MediaRecorder start
                     releaseCamera();
-
-
                     if(!prepareMediaRecorder()){
                         Toast.makeText(main.this,
                                 "Fail in prepareMediaRecorder()!\n - Ended -",
@@ -400,8 +364,6 @@ public class main extends Activity{
 //
                         finish();
                     }
-
-
                     mediaRecorder.start();
                     recording = true;
                     myButton.setText("Stop");
@@ -411,8 +373,6 @@ public class main extends Activity{
                 ex.printStackTrace();
             }
         }};
-
-
     private Camera getCameraInstance(){
         // TODO Auto-generated method stub
         Camera c = null;
@@ -431,8 +391,6 @@ public class main extends Activity{
         String strDate = sdfDate.format(now);
         return strDate;
     }
-
-
     private boolean prepareMediaRecorder(){
         myCamera = getCameraInstance();
         myCamera.setDisplayOrientation(90);
@@ -449,13 +407,6 @@ public class main extends Activity{
         mFileName= getFileName_CustomFormat()+ ".mp4";
 
         mediaRecorder.setOutputFile("/sdcard/"+ mFileName);
-
-
-
-
-      //  mediaRecorder.setOutputFile(mFileName);
-
-        //mediaRecorder.setOutputFile("/sdcard/myvideo1.mp4");
         mediaRecorder.setMaxDuration(60000); // Set max duration 60 sec.
         mediaRecorder.setMaxFileSize(50000000); // Set max file size 50M
 

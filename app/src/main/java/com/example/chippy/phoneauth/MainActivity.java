@@ -14,7 +14,6 @@ import android.widget.Toast;
 
 
         import android.util.Log;
-        //test
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -37,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private String mVerificationId;
     private PhoneAuthProvider.ForceResendingToken mResendToken;
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallbacks;
-    private FirebaseAuth mAuth;
+    public FirebaseAuth mAuth;
     private FirebaseUser user;
     private FirebaseDatabase database;
     private DatabaseReference myref;
@@ -50,7 +49,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         e1 = (EditText) findViewById(R.id.Phonenoedittext);
         b1 = (Button) findViewById(R.id.PhoneVerify);
         t1 = (TextView)findViewById(R.id.textView2Phone);
@@ -110,19 +108,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
         }
-        // [START on_start_check_user]
-       ///// @Override
-      //  public void onStart() {
-           // super.onStart();
-            // Check if user is signed in (non-null) and update UI accordingly.
-           // user =
-            // [START_EXCLUDE]
-           // if (mVerificationInProgress && validatePhoneNumber()) {
-               // startPhoneNumberVerification(mPhoneNumberField.getText().toString());
-          //  }
-            // [END_EXCLUDE]
-       // }
-        // [END on_start_check_user]
+
 
         b1.setOnClickListener(new View.OnClickListener() {
             @Override
